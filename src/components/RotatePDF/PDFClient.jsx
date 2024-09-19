@@ -1,12 +1,13 @@
 "use client";
-import { randomStr } from "@/utils/random";
 import { Button } from "../ui/button";
-import { CirclePlus, CircleMinus, RefreshCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { CirclePlus, CircleMinus } from "lucide-react";
+import { useState } from "react";
+import { randomStr } from "@/utils/random";
 
-import { pdfjs, Document, Page } from "react-pdf";
+import { pdfjs, Document } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
+import PDFDocument from "./PDFDocument";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -26,6 +27,23 @@ export default function PDFClient() {
         rotate: 0,
       }))
     );
+  }
+
+  function downloadPdf() {
+    const doc = pdfjs.getDocument(pdfFile);
+    console.log("doc: ", doc);
+    // const canvasArr = document.querySelectorAll("canvas");
+    // console.log("canvasArr: ", canvasArr);
+    // const PDF = new jsPDF("p", "pt", "a4");
+    // const width = PDF.internal.pageSize.getWidth();
+    // const height = PDF.internal.pageSize.getHeight();
+    // canvasArr.forEach((canvas, i) => {
+    //   PDF.addImage(canvas.toDataURL("image/jpeg"), "JPEG", 0, 0, width, height);
+    //   if (i < canvasArr.length - 1) {
+    //     PDF.addPage();
+    //   }
+    // });
+    // PDF.save(`myPdf.pdf`);
   }
 
   if (!pdfFile) {
@@ -89,39 +107,15 @@ export default function PDFClient() {
           renderMode="canvas"
           onLoadSuccess={onDocumentLoadSuccess}
         >
-          <div className="flex flex-wrap justify-center gap-4">
-            {pdfList.map((item, index) => (
-              <div
-                key={item.id}
-                className="relative bg-white hover:bg-gray-100 p-4 cursor-pointer"
-                onClick={() => {
-                  pdfList[index].rotate += 90;
-                  setPdfList([...pdfList]);
-                }}
-              >
-                <Page
-                  pageNumber={index + 1}
-                  width={pdfWidth}
-                  rotate={item.rotate}
-                />
-                <div
-                  className="absolute top-2 right-2 bg-primary text-white p-1 rounded-full transition-all hover:scale-110"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    pdfList[index].rotate += 90;
-                    setPdfList([...pdfList]);
-                  }}
-                >
-                  <RefreshCcw className="w-3 h-3" />
-                </div>
-                <div className="text-center text-sm">{index + 1}</div>
-              </div>
-            ))}
-          </div>
+          <PDFDocument
+            pdfList={pdfList}
+            setPdfList={setPdfList}
+            pdfWidth={pdfWidth}
+          />
         </Document>
       </div>
       <div className="flex justify-center">
-        <Button>Download</Button>
+        <Button onClick={downloadPdf}>Download</Button>
       </div>
     </>
   );
