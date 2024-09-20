@@ -30,7 +30,6 @@ export default function PDFClient() {
   const [pdfFile, setPdfFile] = useState<File>();
   // const [pdfFile, setPdfFile] = useState("/lhh.pdf");
   const pdfRef = useRef<DocumentCallback | null>(null);
-  const [isDownload, setIsDownload] = useState(false);
 
   function onDocumentLoadSuccess(pdf: DocumentCallback) {
     pdfRef.current = pdf;
@@ -49,10 +48,6 @@ export default function PDFClient() {
      */
     // const data = await pdfRef.current?.saveDocument();
     // download(data, pdfFile.name || "rotate-pdf.pdf", "application/pdf");
-
-    setIsDownload(true);
-
-    await sleep(1000);
 
     const notDisplayContainer = document.querySelector(
       "#not-display-pdf-container"
@@ -75,8 +70,6 @@ export default function PDFClient() {
     });
 
     doc.save(pdfFile?.name || "rotate-pdf.pdf");
-
-    setIsDownload(false);
   }
 
   if (!pdfFile) {
@@ -150,12 +143,11 @@ export default function PDFClient() {
       <div className="flex justify-center mt-4">
         <Button onClick={downloadPdf}>Download</Button>
       </div>
-      {isDownload && (
-        <NotDisplayPDF
-          pdfFile={pdfFile}
-          pdfList={pdfList}
-        />
-      )}
+      {/* {isDownload && ( */}
+      <NotDisplayPDF
+        pdfFile={pdfFile}
+        pdfList={pdfList}
+      />
     </>
   );
 }
