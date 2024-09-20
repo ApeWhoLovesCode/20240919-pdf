@@ -2,26 +2,20 @@
 
 import { RefreshCcw } from "lucide-react";
 import { Page, useDocumentContext } from "react-pdf";
+import { Button } from "../ui/button";
+import { download } from "@/utils/file";
+import { PdfFileItem } from "./type";
 
-function downloadFile(data, fileName, fileType) {
-  const blob = new Blob([data], {
-    type: fileType,
-  });
-  const url = window.URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.style = "display: none";
-
-  a.click();
-  window.URL.revokeObjectURL(url);
-  a.remove();
-}
-
-export default function PDFDocument({ pdfList, setPdfList, pdfWidth }) {
-  const context = useDocumentContext();
+export default function PDFPage({
+  pdfList,
+  setPdfList,
+  pdfWidth,
+}: {
+  pdfList: PdfFileItem[];
+  setPdfList: (pdfList: PdfFileItem[]) => void;
+  pdfWidth: number;
+}) {
+  // const context = useDocumentContext();
 
   return (
     <>
@@ -39,6 +33,8 @@ export default function PDFDocument({ pdfList, setPdfList, pdfWidth }) {
               pageNumber={index + 1}
               width={pdfWidth}
               rotate={item.rotate}
+              // 编辑保存: https://github.com/wojtekmaj/react-pdf/issues/1776
+              // renderForms={true}
               renderAnnotationLayer={false}
               renderTextLayer={false}
             />
@@ -55,20 +51,16 @@ export default function PDFDocument({ pdfList, setPdfList, pdfWidth }) {
             <div className="text-center text-sm">{index + 1}</div>
           </div>
         ))}
-        <div
+        {/* <Button
+          className="absolute bottom-0 left-1/4 -translate-x-1/2"
+          variant="secondary"
           onClick={async () => {
-            // const doc = pdfjs.getDocument(pdfList[0].id);
-            // const data = await context.pdf.getData();
             const data = await context.pdf.saveDocument();
-            console.log("data: ", data);
-
-            downloadFile(data, "newPdf.pdf", "application/pdf");
-
-            // console.log("data: ", data);
+            download(data, "newPdf.pdf", "application/pdf");
           }}
         >
           download
-        </div>
+        </Button> */}
       </div>
     </>
   );

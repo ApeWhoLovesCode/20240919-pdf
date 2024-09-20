@@ -1,13 +1,19 @@
 "use client";
 import { Button } from "../ui/button";
 import { CirclePlus, CircleMinus } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { randomStr } from "@/utils/random";
 
 import { pdfjs, Document } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
-import PDFDocument from "./PDFDocument";
+import PDFPage from "./PDFPage";
+import { download } from "@/utils/file";
+import jsPDF from "jspdf";
+import { PdfFileItem } from "./type";
+import { DocumentCallback } from "react-pdf/dist/cjs/shared/types.js";
+import NotDisplayPDF from "../NotDisplayPDF";
+import sleep from "@/utils/sleep";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -16,34 +22,57 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 export default function PDFClient() {
   const [pdfWidth, setPdfWidth] = useState(200);
-  const [pdfList, setPdfList] = useState([]);
-  // const [pdfFile, setPdfFile] = useState(null);
-  const [pdfFile, setPdfFile] = useState("/lhh.pdf");
+  const [pdfList, setPdfList] = useState<PdfFileItem[]>([]);
+  const [pdfFile, setPdfFile] = useState<File>();
+  // const [pdfFile, setPdfFile] = useState("/lhh.pdf");
+  const pdfRef = useRef<DocumentCallback | null>(null);
+  const [isDownload, setIsDownload] = useState(false);
 
-  function onDocumentLoadSuccess(p) {
+  function onDocumentLoadSuccess(pdf: DocumentCallback) {
+    pdfRef.current = pdf;
     setPdfList(
-      Array.from({ length: p._pdfInfo.numPages }).map((_, i) => ({
+      Array.from({ length: pdf._pdfInfo.numPages }).map((_, i) => ({
         id: randomStr(i + 1),
         rotate: 0,
       }))
     );
   }
 
-  function downloadPdf() {
-    const doc = pdfjs.getDocument(pdfFile);
-    console.log("doc: ", doc);
-    // const canvasArr = document.querySelectorAll("canvas");
-    // console.log("canvasArr: ", canvasArr);
-    // const PDF = new jsPDF("p", "pt", "a4");
-    // const width = PDF.internal.pageSize.getWidth();
-    // const height = PDF.internal.pageSize.getHeight();
-    // canvasArr.forEach((canvas, i) => {
-    //   PDF.addImage(canvas.toDataURL("image/jpeg"), "JPEG", 0, 0, width, height);
-    //   if (i < canvasArr.length - 1) {
-    //     PDF.addPage();
-    //   }
-    // });
-    // PDF.save(`myPdf.pdf`);
+  async function downloadPdf() {
+    /**
+     * react-pdf 找不到什么能保存下旋转 pdf 图像的方法
+     * 所以退而求其次，用 jsPdf 来简单实现了
+     */
+    // const data = await pdfRef.current?.saveDocument();
+    // download(data, pdfFile.name || "rotate-pdf.pdf", "application/pdf");
+
+    setIsDownload(true);
+
+    await sleep(1000);
+
+    const notDisplayContainer = document.querySelector(
+      "#not-display-pdf-container"
+    );
+    const canvasArr = notDisplayContainer?.querySelectorAll("canvas");
+    if (!canvasArr?.length) return;
+    const doc = new jsPDF(
+      canvasArr[0].width < canvasArr[0].height ? "p" : "l",
+      "mm",
+      "a4"
+    );
+
+    canvasArr?.forEach((canvas, i) => {
+      if (i > 0) {
+        doc.addPage(undefined, canvas.width < canvas.height ? "p" : "l");
+      }
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      doc.addImage(canvas.toDataURL("image/jpeg"), "JPEG", 0, 0, width, height);
+    });
+
+    doc.save(pdfFile?.name || "rotate-pdf.pdf");
+
+    setIsDownload(false);
   }
 
   if (!pdfFile) {
@@ -61,7 +90,7 @@ export default function PDFClient() {
           accept=".pdf"
           className="hidden"
           onChange={(e) => {
-            setPdfFile(e.target.files[0]);
+            setPdfFile(e.target.files?.[0]);
           }}
         />
       </>
@@ -70,7 +99,7 @@ export default function PDFClient() {
 
   return (
     <>
-      <div className="flex justify-center gap-x-4">
+      <div className="flex justify-center gap-x-4 mb-8">
         <Button
           onClick={() => {
             setPdfList((list) =>
@@ -82,7 +111,7 @@ export default function PDFClient() {
         </Button>
         <Button
           variant="secondary"
-          onClick={() => setPdfFile(null)}
+          onClick={() => setPdfFile(undefined)}
         >
           Remove PDF
         </Button>
@@ -107,16 +136,22 @@ export default function PDFClient() {
           renderMode="canvas"
           onLoadSuccess={onDocumentLoadSuccess}
         >
-          <PDFDocument
+          <PDFPage
             pdfList={pdfList}
             setPdfList={setPdfList}
             pdfWidth={pdfWidth}
           />
         </Document>
       </div>
-      <div className="flex justify-center">
+      <div className="flex justify-center mt-4">
         <Button onClick={downloadPdf}>Download</Button>
       </div>
+      {isDownload && (
+        <NotDisplayPDF
+          pdfFile={pdfFile}
+          pdfList={pdfList}
+        />
+      )}
     </>
   );
 }
