@@ -16,7 +16,8 @@ import NotDisplayPDF from "../NotDisplayPDF";
 import sleep from "@/utils/sleep";
 
 // 解决打包的报错问题 https://github.com/wojtekmaj/react-pdf/issues/1855#issuecomment-2318454146
-pdfjs.GlobalWorkerOptions.workerSrc = "./pdf.worker.min.mjs";
+// pdfjs.GlobalWorkerOptions.workerSrc = "/public/pdf.worker.min.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
 // pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 //   "pdfjs-dist/build/pdf.worker.min.mjs",
