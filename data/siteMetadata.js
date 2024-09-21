@@ -1,5 +1,5 @@
 const siteMetadata = {
-  siteUrl: "http://codeape.site",
+  siteUrl: "https://lhh-rotate-pdf.vercel.app",
   title: "Rotate PDF",
   description: "Support rotation editing of pdf files",
 };
